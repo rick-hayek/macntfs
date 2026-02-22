@@ -1,13 +1,19 @@
 import Foundation
-import DiskArbitration
 import Shared
+import CoreFoundation
 
-@main
-struct MacNTFS {
-    static func main() {
-        print("Starting MacNTFS Daemon...")
+// Move the Daemon out of the main entry point to a dedicated class
+public final class DiskMonitorDaemon: @unchecked Sendable {
+    public static let shared = DiskMonitorDaemon()
+    
+    private var session: DASession?
+    
+    public init() {}
+    
+    public func start() {
+        print("Starting DiskMonitorDaemon...")
         
-        let session = DASessionCreate(kCFAllocatorDefault)
+        session = DASessionCreate(kCFAllocatorDefault)
         guard let session = session else {
             print("Failed to create DASession")
             return
@@ -22,7 +28,6 @@ struct MacNTFS {
             
             let isNTFS = (diskDesc[kDADiskDescriptionMediaContentKey as String] as? String) == "Windows_NTFS"
             
-            print("Disk Appeared: \(mediaName)")
             if isNTFS {
                 let uuid = diskDesc[kDADiskDescriptionMediaUUIDKey as String] as? UUID
                 // Retrieve the UNIX device node (e.g., /dev/disk2s1)
@@ -33,12 +38,9 @@ struct MacNTFS {
                 print("🚨 NTFS Volume Detected! UUID: \(uuidString), BSD Name: \(bsdName)")
                 
                 if bsdName != "unknown" {
-                    // 1. Fetch the user's configuration for this specific disk
                     let configMode = AppConfiguration.shared.getMode(forDiskUUID: uuidString)
                     
-                    // 2. We always register it so the future UI can see it was plugged in
                     AppConfiguration.shared.registerDisk(uuid: uuidString, name: mediaName, mode: configMode)
-                    
                     print("Disk configured mode is: \(configMode.rawValue)")
                     
                     switch configMode {
@@ -60,15 +62,8 @@ struct MacNTFS {
             }
         }
         
-        // Register the callback
         DARegisterDiskAppearedCallback(session, nil, diskAppearedCallback, nil)
-        
-        // Schedule the session on the current run loop
-        DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue)
-        
-        print("Daemon is running and listening for disk events. Press Ctrl+C to stop.")
-        
-        // Start the run loop to keep the daemon alive
-        RunLoop.current.run()
+        DASessionScheduleWithRunLoop(session, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+        print("Daemon is running and listening for disk events on main run loop.")
     }
 }
