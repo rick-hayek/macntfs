@@ -46,7 +46,7 @@ We have provided a convenient Bash script `test_xpc.sh` that compiles the Swift 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/macntfs.git
+   git clone https://github.com/rick-hayek/macntfs.git
    cd macntfs
    ```
 2. Build and sign the binaries:

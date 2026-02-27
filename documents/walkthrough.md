@@ -15,7 +15,7 @@
 为了正确的运行模拟跨越系统权限沙盒的 XPC 提权调用，请必须使用工程目录下我配备的专用编译证书签发脚本：
 
 ```bash
-cd /Users/rick/src/macntfs/initial-project
+cd /Users/rick/src/macntfs
 ./test_xpc.sh
 ```
 
